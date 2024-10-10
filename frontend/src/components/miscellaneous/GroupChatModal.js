@@ -12,16 +12,18 @@ import {
   Input,
   useToast,
   Box,
+  Spinner,
 } from "@chakra-ui/react";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 import UserBadgeItem from "../userAvatar/UserBadgeItem";
 import UserListItem from "../userAvatar/UserListItem";
+import { useDebounce } from "../../hooks/useDebounce"; // Custom hook for debounce
 
 const GroupChatModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [groupChatName, setGroupChatName] = useState();
+  const [groupChatName, setGroupChatName] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState([]);
@@ -29,6 +31,13 @@ const GroupChatModal = ({ children }) => {
   const toast = useToast();
 
   const { user, chats, setChats } = ChatState();
+
+  const debouncedSearch = useDebounce(search, 500); // Custom debounce hook to delay search API calls
+
+  useEffect(() => {
+    if (!debouncedSearch) return; // Don't fetch if no search term
+    handleSearch(debouncedSearch);
+  }, [debouncedSearch]);
 
   const handleGroup = (userToAdd) => {
     if (selectedUsers.includes(userToAdd)) {
@@ -46,11 +55,7 @@ const GroupChatModal = ({ children }) => {
   };
 
   const handleSearch = async (query) => {
-    setSearch(query);
-    if (!query) {
-      return;
-    }
-
+    if (!query) return;
     try {
       setLoading(true);
       const config = {
@@ -58,13 +63,12 @@ const GroupChatModal = ({ children }) => {
           Authorization: `Bearer ${user.token}`,
         },
       };
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
-      console.log(data);
-      setLoading(false);
+      const { data } = await axios.get(`/api/user?search=${query}`, config);
       setSearchResult(data);
+      setLoading(false);
     } catch (error) {
       toast({
-        title: "Error Occured!",
+        title: "Error Occurred!",
         description: "Failed to Load the Search Results",
         status: "error",
         duration: 5000,
@@ -79,9 +83,9 @@ const GroupChatModal = ({ children }) => {
   };
 
   const handleSubmit = async () => {
-    if (!groupChatName || !selectedUsers) {
+    if (!groupChatName || !selectedUsers.length) {
       toast({
-        title: "Please fill all the feilds",
+        title: "Please fill all the fields",
         status: "warning",
         duration: 5000,
         isClosable: true,
@@ -147,13 +151,16 @@ const GroupChatModal = ({ children }) => {
                 placeholder="Chat Name"
                 mb={3}
                 onChange={(e) => setGroupChatName(e.target.value)}
+                value={groupChatName}
               />
             </FormControl>
             <FormControl>
               <Input
-                placeholder="Add Users eg: John, Piyush, Jane"
+                placeholder="Add Users (e.g., John, Piyush, Jane)"
                 mb={1}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
+                value={search}
+                aria-label="Search users"
               />
             </FormControl>
             <Box w="100%" d="flex" flexWrap="wrap">
@@ -166,8 +173,7 @@ const GroupChatModal = ({ children }) => {
               ))}
             </Box>
             {loading ? (
-              // <ChatLoading />
-              <div>Loading...</div>
+              <Spinner size="lg" />
             ) : (
               searchResult
                 ?.slice(0, 4)

@@ -26,7 +26,7 @@ const ProfileModal = ({ user, children }) => {
       )}
       <Modal size="lg" onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent h="410px">
+        <ModalContent minH="350px" maxW="400px" p={5}>
           <ModalHeader
             fontSize="40px"
             fontFamily="Work sans"
@@ -44,13 +44,14 @@ const ProfileModal = ({ user, children }) => {
           >
             <Image
               borderRadius="full"
-              boxSize="150px"
+              boxSize={{ base: "120px", md: "150px" }} // Responsive image size
               src={user.pic}
               alt={user.name}
             />
             <Text
-              fontSize={{ base: "28px", md: "30px" }}
+              fontSize={{ base: "18px", md: "20px" }}
               fontFamily="Work sans"
+              textAlign="center"
             >
               Email: {user.email}
             </Text>
