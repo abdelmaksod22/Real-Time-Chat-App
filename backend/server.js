@@ -50,8 +50,8 @@ io.on("connection", (socket) => {
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
   socket.on("new message", (newMessageRecieved) => {
-    const chat = newMessageRecieved.chat;
-    if (chat.users) return console.log("chat.users not defined");
+    var chat = newMessageRecieved.chat;
+    if (!chat.users) return console.log("chat.users not defined");
 
     chat.users.forEach((user) => {
       if (user._id == newMessageRecieved.sender._id) return;
